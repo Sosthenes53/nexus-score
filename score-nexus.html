@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Score Metabólico — Clínica NEXUS</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy:   #0D1F3C;
+  --navy2:  #162B50;
+  --teal:   #1A7A6E;
+  --teal2:  #24A695;
+  --teal3:  #E1F5EE;
+  --gold:   #C9A84C;
+  --gold2:  #E8C96A;
+  --gold3:  #FDF3DC;
+  --cream:  #F7F4EE;
+  --cream2: #EDE8DF;
+  --text:   #1C1C1C;
+  --muted:  #5A5A5A;
+  --border: #D4CFC6;
+  --r:      10px;
+  --wh: #fff;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Jost',sans-serif;font-weight:400;background:var(--cream);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+/* ── NOISE TEXTURE ── */
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4;}
+
+/* ── SCREENS ── */
+.screen{display:none;min-height:100vh;position:relative;z-index:1;}
+.screen.active{display:flex;flex-direction:column;}
+
+/* ══════════════════════════════
+   TELA 1 — ENTRADA
+══════════════════════════════ */
+#screen-intro{background:var(--navy);align-items:center;justify-content:center;padding:2rem 1.5rem;}
+.intro-inner{max-width:480px;width:100%;text-align:center;}
+.intro-logo{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:600;color:#fff;letter-spacing:.14em;}
+.intro-logo span{color:var(--gold2);}
+.intro-sub{font-size:.68rem;letter-spacing:.24em;color:var(--teal2);text-transform:uppercase;margin-top:.2rem;}
+.intro-divider{width:40px;height:2px;background:linear-gradient(90deg,var(--teal2),var(--gold2));margin:2rem auto;}
+.intro-headline{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:400;color:#fff;line-height:1.25;margin-bottom:1rem;}
+.intro-headline em{color:var(--gold2);font-style:italic;}
+.intro-body{font-size:.9rem;color:rgba(255,255,255,.6);line-height:1.75;margin-bottom:.5rem;}
+.intro-time{display:inline-flex;align-items:center;gap:.4rem;font-size:.75rem;color:var(--teal2);letter-spacing:.1em;margin:1.25rem 0 2rem;}
+.intro-time::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--teal2);}
+.btn-start{display:block;width:100%;padding:.9rem 2rem;background:linear-gradient(135deg,var(--teal),var(--teal2));color:#fff;font-family:'Jost',sans-serif;font-size:.95rem;font-weight:600;letter-spacing:.1em;border:none;border-radius:99px;cursor:pointer;transition:all .25s;}
+.btn-start:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(26,122,110,.35);}
+.intro-badges{display:flex;justify-content:center;gap:.75rem;margin-top:1.5rem;flex-wrap:wrap;}
+.badge{font-size:.68rem;letter-spacing:.08em;color:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.1);border-radius:99px;padding:.3rem .8rem;}
+
+/* ══════════════════════════════
+   TELA 2 — QUIZ
+══════════════════════════════ */
+#screen-quiz{background:var(--cream);padding:0;}
+.quiz-header{background:var(--navy);padding:1.25rem 1.5rem;display:flex;align-items:center;gap:1rem;}
+.quiz-logo-sm{font-family:'Playfair Display',serif;font-size:1.1rem;color:#fff;letter-spacing:.12em;}
+.quiz-logo-sm span{color:var(--gold2);}
+.quiz-progress-wrap{flex:1;}
+.quiz-bar{height:3px;background:rgba(255,255,255,.12);border-radius:99px;overflow:hidden;}
+.quiz-fill{height:100%;background:linear-gradient(90deg,var(--teal2),var(--gold2));border-radius:99px;transition:width .5s ease;}
+.quiz-label{font-size:.65rem;color:rgba(255,255,255,.35);letter-spacing:.1em;margin-top:.35rem;}
+
+.quiz-body{flex:1;padding:2rem 1.5rem 4rem;max-width:560px;margin:0 auto;width:100%;}
+
+.question{display:none;animation:qIn .35s ease;}
+.question.active{display:block;}
+@keyframes qIn{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+
+.q-num{font-size:.65rem;letter-spacing:.2em;color:var(--teal);text-transform:uppercase;font-weight:600;margin-bottom:.5rem;}
+.q-text{font-family:'Playfair Display',serif;font-size:1.25rem;color:var(--navy);line-height:1.35;margin-bottom:.3rem;}
+.q-hint{font-size:.8rem;color:var(--muted);margin-bottom:1.5rem;line-height:1.5;}
+
+.options{display:flex;flex-direction:column;gap:.5rem;}
+.opt{display:flex;align-items:flex-start;gap:.75rem;padding:.75rem 1rem;border:1px solid var(--border);border-radius:var(--r);cursor:pointer;background:#fff;transition:all .15s;-webkit-tap-highlight-color:transparent;}
+.opt:hover{border-color:var(--teal2);background:var(--teal3);}
+.opt.sel{border-color:var(--teal);background:rgba(26,122,110,.07);}
+.opt input{display:none;}
+.opt-dot{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--border);flex-shrink:0;margin-top:2px;transition:all .15s;display:flex;align-items:center;justify-content:center;}
+.opt.sel .opt-dot{background:var(--teal);border-color:var(--teal);}
+.opt.sel .opt-dot::after{content:'';width:6px;height:6px;border-radius:50%;background:#fff;}
+.opt-label{font-size:.9rem;line-height:1.4;color:var(--text);}
+
+/* Âncora de transição */
+.anchor-block{background:var(--navy);border-radius:var(--r);padding:1.25rem 1.25rem;margin:1.5rem 0;display:none;}
+.anchor-block.show{display:block;}
+.anchor-text{font-size:.85rem;color:rgba(255,255,255,.75);line-height:1.75;}
+.anchor-text strong{color:var(--gold2);}
+
+.quiz-nav{display:flex;justify-content:space-between;align-items:center;margin-top:2rem;padding-top:1.25rem;border-top:1px solid var(--border);}
+.btn-nav{font-family:'Jost',sans-serif;font-size:.85rem;font-weight:500;letter-spacing:.07em;padding:.65rem 1.5rem;border-radius:99px;cursor:pointer;border:none;transition:all .2s;}
+.btn-back{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-back:hover{border-color:var(--navy);color:var(--navy);}
+.btn-next{background:var(--teal);color:#fff;}
+.btn-next:hover{background:var(--teal2);transform:translateY(-1px);}
+.btn-next:disabled{background:var(--border);cursor:not-allowed;transform:none;}
+
+/* ══════════════════════════════
+   TELA 3 — RESULTADO
+══════════════════════════════ */
+#screen-result{background:var(--navy);padding:0;}
+.result-hero{padding:3rem 1.5rem 2.5rem;text-align:center;max-width:520px;margin:0 auto;}
+.result-logo{font-family:'Playfair Display',serif;font-size:1.1rem;color:#fff;letter-spacing:.12em;margin-bottom:2rem;}
+.result-logo span{color:var(--gold2);}
+.result-badge{display:inline-block;font-size:.65rem;letter-spacing:.22em;text-transform:uppercase;padding:.35rem 1rem;border-radius:99px;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.5);margin-bottom:1.25rem;}
+.result-score-ring{width:90px;height:90px;border-radius:50%;border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;flex-direction:column;}
+.result-score-num{font-family:'Playfair Display',serif;font-size:2rem;color:var(--gold2);line-height:1;}
+.result-score-lbl{font-size:.6rem;letter-spacing:.15em;color:var(--gold);text-transform:uppercase;margin-top:.15rem;}
+.result-profile-name{font-family:'Playfair Display',serif;font-size:1.7rem;color:#fff;line-height:1.2;margin-bottom:.75rem;}
+.result-profile-name em{color:var(--gold2);font-style:italic;}
+.result-desc{font-size:.88rem;color:rgba(255,255,255,.65);line-height:1.8;margin-bottom:1.5rem;}
+
+.result-signals{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:var(--r);padding:1.25rem;margin-bottom:2rem;text-align:left;}
+.signals-title{font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;color:var(--teal2);margin-bottom:.85rem;}
+.signal-item{display:flex;align-items:flex-start;gap:.65rem;margin-bottom:.65rem;font-size:.85rem;color:rgba(255,255,255,.7);line-height:1.4;}
+.signal-item:last-child{margin-bottom:0;}
+.signal-dot{width:5px;height:5px;border-radius:50%;background:var(--gold2);flex-shrink:0;margin-top:6px;}
+
+.result-cta-group{display:flex;flex-direction:column;gap:.75rem;padding:0 1.5rem 3rem;max-width:520px;margin:0 auto;width:100%;}
+.btn-portfolio{display:block;padding:.9rem 1.5rem;background:linear-gradient(135deg,var(--teal),var(--teal2));color:#fff;font-family:'Jost',sans-serif;font-size:.9rem;font-weight:600;letter-spacing:.08em;border:none;border-radius:99px;cursor:pointer;text-align:center;text-decoration:none;transition:all .25s;}
+.btn-portfolio:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(26,122,110,.4);}
+.btn-wpp{display:block;padding:.9rem 1.5rem;background:transparent;color:var(--gold2);font-family:'Jost',sans-serif;font-size:.9rem;font-weight:500;letter-spacing:.08em;border:1px solid rgba(201,168,76,.3);border-radius:99px;cursor:pointer;text-align:center;text-decoration:none;transition:all .25s;}
+.btn-wpp:hover{background:rgba(201,168,76,.08);border-color:var(--gold2);}
+
+/* ══════════════════════════════
+   TELA 4 — PORTFÓLIO
+══════════════════════════════ */
+#screen-portfolio{background:var(--cream);display:none;flex-direction:column;}
+#screen-portfolio.active{display:flex;}
+
+.port-header{background:var(--navy);padding:1.5rem;text-align:center;position:relative;}
+.port-back{position:absolute;left:1.25rem;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.08);border:none;color:rgba(255,255,255,.6);font-size:.8rem;padding:.4rem .85rem;border-radius:99px;cursor:pointer;font-family:'Jost',sans-serif;}
+.port-back:hover{background:rgba(255,255,255,.14);color:#fff;}
+.port-logo{font-family:'Playfair Display',serif;font-size:1.2rem;color:#fff;letter-spacing:.12em;}
+.port-logo span{color:var(--gold2);}
+.port-tagline{font-size:.68rem;letter-spacing:.18em;color:var(--teal2);text-transform:uppercase;margin-top:.2rem;}
+
+.port-hero{background:var(--navy);padding:2rem 1.5rem 2.5rem;text-align:center;}
+.port-hero-title{font-family:'Playfair Display',serif;font-size:1.6rem;color:#fff;line-height:1.2;margin-bottom:.65rem;}
+.port-hero-title em{color:var(--gold2);font-style:italic;}
+.port-hero-sub{font-size:.85rem;color:rgba(255,255,255,.55);line-height:1.7;max-width:420px;margin:0 auto;}
+.port-hero-divider{width:36px;height:2px;background:linear-gradient(90deg,var(--teal2),var(--gold2));margin:1.5rem auto 0;}
+
+/* Navegação por categoria */
+.port-nav{background:#fff;border-bottom:1px solid var(--border);padding:.75rem 1.25rem;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;}
+.port-nav::-webkit-scrollbar{display:none;}
+.port-nav-inner{display:inline-flex;gap:.5rem;}
+.cat-btn{font-family:'Jost',sans-serif;font-size:.75rem;font-weight:500;letter-spacing:.07em;padding:.4rem .9rem;border-radius:99px;border:1px solid var(--border);background:#fff;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.cat-btn.active,.cat-btn:hover{background:var(--navy);color:#fff;border-color:var(--navy);}
+
+/* Categorias */
+.port-section{padding:2rem 1.25rem;display:none;}
+.port-section.visible{display:block;}
+.port-s-label{font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--teal);font-weight:600;margin-bottom:.4rem;}
+.port-s-title{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--navy);margin-bottom:.5rem;line-height:1.2;}
+.port-s-desc{font-size:.83rem;color:var(--muted);line-height:1.7;margin-bottom:1.5rem;}
+
+/* Cards de serviço */
+.service-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:.85rem;position:relative;overflow:hidden;}
+.service-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:linear-gradient(180deg,var(--teal),var(--teal2));}
+.sc-tag{font-size:.62rem;letter-spacing:.15em;text-transform:uppercase;color:var(--teal);font-weight:600;margin-bottom:.4rem;}
+.sc-name{font-family:'Playfair Display',serif;font-size:1.05rem;color:var(--navy);margin-bottom:.4rem;line-height:1.2;}
+.sc-desc{font-size:.8rem;color:var(--muted);line-height:1.6;margin-bottom:.85rem;}
+.sc-includes{margin-bottom:.85rem;}
+.sc-inc-title{font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.4rem;}
+.sc-inc-item{display:flex;align-items:flex-start;gap:.5rem;font-size:.78rem;color:var(--text);line-height:1.4;margin-bottom:.3rem;}
+.sc-inc-item::before{content:'—';color:var(--teal);flex-shrink:0;font-size:.75rem;margin-top:1px;}
+.sc-price-row{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:.5rem;padding-top:.75rem;border-top:1px solid var(--border);}
+.sc-price{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--navy);}
+.sc-price-note{font-size:.72rem;color:var(--muted);}
+.sc-price-pix{font-size:.75rem;color:var(--teal);font-weight:500;}
+.sc-btn{display:block;width:100%;margin-top:.85rem;padding:.65rem 1rem;background:var(--teal);color:#fff;font-family:'Jost',sans-serif;font-size:.82rem;font-weight:600;letter-spacing:.07em;border:none;border-radius:99px;cursor:pointer;text-align:center;text-decoration:none;transition:all .2s;}
+.sc-btn:hover{background:var(--teal2);}
+
+/* Card destaque */
+.service-card.featured{border-color:var(--gold);background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);color:#fff;}
+.service-card.featured::before{background:linear-gradient(180deg,var(--gold),var(--gold2));}
+.service-card.featured .sc-tag{color:var(--gold2);}
+.service-card.featured .sc-name{color:#fff;}
+.service-card.featured .sc-desc{color:rgba(255,255,255,.6);}
+.service-card.featured .sc-inc-title{color:rgba(255,255,255,.4);}
+.service-card.featured .sc-inc-item{color:rgba(255,255,255,.75);}
+.service-card.featured .sc-inc-item::before{color:var(--gold2);}
+.service-card.featured .sc-price-row{border-top-color:rgba(255,255,255,.1);}
+.service-card.featured .sc-price{color:var(--gold2);}
+.service-card.featured .sc-price-note{color:rgba(255,255,255,.4);}
+.service-card.featured .sc-btn{background:var(--gold);color:var(--navy);}
+.service-card.featured .sc-btn:hover{background:var(--gold2);}
+
+/* Tag popular */
+.sc-popular{position:absolute;top:.85rem;right:.85rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;background:var(--gold);color:var(--navy);padding:.2rem .6rem;border-radius:99px;font-weight:600;}
+
+/* Tabela de doses */
+.dose-table{width:100%;border-collapse:collapse;margin-bottom:.85rem;}
+.dose-table th{font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:.4rem .5rem;text-align:left;border-bottom:1px solid var(--border);}
+.dose-table td{padding:.6rem .5rem;font-size:.85rem;border-bottom:1px solid rgba(212,207,198,.4);}
+.dose-table tr:last-child td{border-bottom:none;}
+.dose-price{color:var(--teal);font-family:'Playfair Display',serif;font-size:.95rem;}
+.dose-tag{font-size:.6rem;letter-spacing:.1em;background:var(--cream2);color:var(--muted);padding:.15rem .5rem;border-radius:4px;margin-left:.35rem;}
+
+/* Footer portfólio */
+.port-footer{background:var(--navy);padding:2rem 1.5rem;text-align:center;margin-top:auto;}
+.port-footer-logo{font-family:'Playfair Display',serif;font-size:1rem;color:#fff;letter-spacing:.12em;margin-bottom:.3rem;}
+.port-footer-logo span{color:var(--gold2);}
+.port-footer-sub{font-size:.65rem;letter-spacing:.15em;color:var(--teal2);text-transform:uppercase;margin-bottom:1.25rem;}
+.port-footer-wpp{display:inline-flex;align-items:center;gap:.5rem;padding:.75rem 1.75rem;background:var(--teal);color:#fff;font-family:'Jost',sans-serif;font-size:.85rem;font-weight:600;letter-spacing:.07em;border-radius:99px;text-decoration:none;transition:all .2s;}
+.port-footer-wpp:hover{background:var(--teal2);transform:translateY(-1px);}
+
+@media(max-width:480px){
+  .intro-headline{font-size:1.6rem;}
+  .result-profile-name{font-size:1.4rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════
+     TELA 1 — ENTRADA
+══════════════════════════════ -->
+<div class="screen active" id="screen-intro">
+  <div class="intro-inner">
+    <div class="intro-logo">NEXUS<span>.</span></div>
+    <div class="intro-sub">Centro de Performance Metabólica</div>
+    <div class="intro-divider"></div>
+    <h1 class="intro-headline">Descubra seu<br><em>perfil metabólico</em><br>em 2 minutos</h1>
+    <p class="intro-body">Entenda por que emagrecer tem sido tão difícil para você — e veja qual caminho faz mais sentido para o seu caso.</p>
+    <div class="intro-time">Gratuito · 2 minutos · Resultado imediato</div>
+    <button class="btn-start" onclick="startQuiz()">Fazer meu Score Metabólico →</button>
+    <div class="intro-badges">
+      <span class="badge">Avaliação clínica</span>
+      <span class="badge">Sem compromisso</span>
+      <span class="badge">100% gratuito</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     TELA 2 — QUIZ
+══════════════════════════════ -->
+<div class="screen" id="screen-quiz">
+  <div class="quiz-header">
+    <div class="quiz-logo-sm">NEXUS<span>.</span></div>
+    <div class="quiz-progress-wrap">
+      <div class="quiz-bar"><div class="quiz-fill" id="quizFill" style="width:10%"></div></div>
+      <div class="quiz-label" id="quizLabel">Pergunta 1 de 10</div>
+    </div>
+  </div>
+
+  <div class="quiz-body">
+
+    <!-- P1 -->
+    <div class="question active" data-q="1">
+      <div class="q-num">Pergunta 1 de 10</div>
+      <div class="q-text">Qual é a sua maior dificuldade com o seu peso hoje?</div>
+      <div class="q-hint">Escolha a que mais te representa.</div>
+      <div class="options">
+        <label class="opt"><input type="radio" name="q1" value="2"><span class="opt-dot"></span><span class="opt-label">Fome o tempo todo, mesmo depois de comer</span></label>
+        <label class="opt"><input type="radio" name="q1" value="2"><span class="opt-dot"></span><span class="opt-label">Como bem, mas não consigo emagrecer</span></label>
+        <label class="opt"><input type="radio" name="q1" value="3"><span class="opt-dot"></span><span class="opt-label">Emagreço e volto a engordar sempre</span></label>
+        <label class="opt"><input type="radio" name="q1" value="1"><span class="opt-dot"></span><span class="opt-label">Perdi a motivação, não consigo manter nenhuma dieta</span></label>
+        <label class="opt"><input type="radio" name="q1" value="3"><span class="opt-dot"></span><span class="opt-label">Nunca consegui emagrecer de verdade</span></label>
+      </div>
+    </div>
+
+    <!-- P2 -->
+    <div class="question" data-q="2">
+      <div class="q-num">Pergunta 2 de 10</div>
+      <div class="q-text">O que você já tentou fazer para emagrecer?</div>
+      <div class="q-hint">Pode se identificar com mais de uma — escolha a que mais se encaixa.</div>
+      <div class="options">
+        <label class="opt"><input type="radio" name="q2" value="1"><span class="opt-dot"></span><span class="opt-label">Dieta por conta própria</span></label>
+        <label class="opt"><input type="radio" name="q2" value="1"><span class="opt-dot"></span><span class="opt-label">Acompanhamento com nutricionista ou médico</span></label>
+        <label class="opt"><input type="radio" name="q2" value="2"><span class="opt-dot"></span><span class="opt-label">Academia ou exercícios regulares</span></label>
+        <label class="opt"><input type="radio" name="q2" value="2"><span class="opt-dot"></span><span class="opt-label">Remédios para emagrecer sem resultado duradouro</span></label>
+        <label class="opt"><input type="radio" name="q2" value="3"><span class="opt-dot"></span><span class="opt-label">Já tentei tudo — nada funcionou de verdade</span></label>
+      </div>
+    </div>
+
+    <!-- P3 -->
+    <div class="question" data-q="3">
+      <div class="q-num">Pergunta 3 de 10</div>
+      <div class="q-text">Quanto você quer ou precisa perder?</div>
+      <div class="options">
+        <label class="opt"><input type="radio" name="q3" value="1"><span class="opt-dot"></span><span class="opt-label">Até 5 kg</span></label>
+        <label class="opt"><input type="radio" name="q3" value="1"><span class="opt-dot"></span><span class="opt-label">Entre 5 e 10 kg</span></label>
+        <label class="opt"><input type="radio" name="q3" value="2"><span class="opt-dot"></span><span class="opt-label">Entre 10 e 20 kg</span></label>
+        <label class="opt"><input type="radio" name="q3" value="3"><span class="opt-dot"></span><span class="opt-label">Mais de 20 kg</span></label>
+      </div>
+    </div>
+
+    <!-- P4 -->
+    <div class="question" data-q="4">
+      <div class="q-num">Pergunta 4 de 10</div>
+      <div class="q-text">Onde você acumula mais gordura e como sua cintura está evoluindo?</div>
+      <div class="q-hint">Um dos principais marcadores de resistência metabólica é o acúmulo abdominal progressivo.</div>
+      <div class="options">
+        <label class="opt"><input type="radio" name="q4" value="0"><span class="opt-dot"></span><span class="opt-label">Distribuída pelo corpo — minha cintura está estável</span></label>
+        <label class="opt"><input type="radio" name="q4" value="1"><span class="opt-dot"></span><span class="opt-label">Concentrada no abdômen, mas estável há algum tempo</span></label>
+        <label class="opt"><input type="radio" name="q4" value="2"><span class="opt-dot"></span><span class="opt-label">Minha cintura aumentou nos últimos 12 meses mesmo sem mudar a alimentação</span></label>
+        <label class="opt"><input type="radio" name="q4" value="3"><span class="opt-dot"></span><span class="opt-label">Acúmulo abdominal progressivo e inchaço frequente — mesmo comendo pouco</span></label>
+      </div>
+    </div>
+
+    <!-- P5 -->
+    <div class="question" data-q="5">
+      <div class="q-num">Pergunta 5 de 10</div>
+      <div class="q-text">Como é a sua energia ao longo do dia?</div>
+      <div class="options">
+        <label class="opt"><input type="radio" name="q5" value="0"><span class="opt-dot"></span><span class="opt-label">Constante, me sinto bem o dia todo</span></label>
+        <label class="opt"><input type="radio" name="q5" value="1"><span class="opt-dot"></span><span class="opt-label">Cai depois do almoço — preciso de café ou doce para continuar</span></label>
+        <label class="opt"><input type="radio" name="q5" value="2"><span class="opt-dot"></span><span class="opt-label">Acordo cansado(a) e fico assim o dia todo</span></label>
+        <label class="opt"><input type="radio" name="q5" value="2"><span class="opt-dot"></span><span class="opt-label">Tenho picos — às vezes bem, às vezes sem energia nenhuma</span></label>
+      </div>
+    </div>
+
+    <!-- P6 -->
+    <div class="question" data-q="6">
+      <div class="q-num">Pergunta 6 de 10</div>
+      <div class="q-text">Como você costuma dormir?</div>
+      <div class="options">
+        <label class="opt"><input type="radio" name="q6" value="0"><span class="opt-dot"></span><span class="opt-label">Durmo bem e acordo disposto(a)</span></label>
+        <label class="opt"><input type="radio" name="q6" value="1"><span class="opt-dot"></span><span class="opt-label">Demoro para pegar no sono</span></label>
+        <label class="opt"><input type="radio" name="q6" value="2"><span class="opt-dot"></span><span class="opt-label">Acordo várias vezes durante a noite</span></label>
+        <label class="opt"><input type="radio" name="q6" value="2"><span class="opt-dot"></span><span class="opt-label">Durmo, mas acordo cansado(a) como se não tivesse dormido</span></label>
+      </div>
+    </div>
+
+    <!-- P7 -->
+    <div class="question" data-q="7">
+      <div class="q-num">Pergunta 7 de 10</div>
+      <div class="q-text">Você se identifica com alguma dessas situações?</div>
+      <div class="options">
+        <label class="opt"><input type="radio" name="q7" value="2"><span class="opt-dot"></span><span class="opt-label">Como mais quando estou estressado(a) ou ansioso(a)</span></label>
+        <label class="opt"><input type="radio" name="q7" value="3"><span class="opt-dot"></span><span class="opt-label">Passo o dia inteiro pensando em comida</span></label>
+        <label class="opt"><input type="radio" name="q7" value="2"><span class="opt-dot"></span><span class="opt-label">Como pouco durante o dia e exagero à noite</span></label>
+        <label class="opt"><input type="radio" name="q7" value="0"><span class="opt-dot"></span><span class="opt-label">Não tenho compulsão — como de forma tranquila</span></label>
+      </div>
+    </div>
+
+    <!-- P8 -->
+    <div class="question" data-q="8">
+      <div class="q-num">Pergunta 8 de 10</div>
+      <div class="q-text">Se você tivesse acesso a um protocolo personalizado que realmente funciona, o que te impediria de começar hoje?</div>
+      <div class="options">
+        <label class="opt"><input type="radio" name="q8" value="nenhuma"><span class="opt-dot"></span><span class="opt-label">Nada — estou pronto(a) para começar agora</span></label>
+        <label class="opt"><input type="radio" name="q8" value="entender"><span class="opt-dot"></span><span class="opt-label">Preciso entender melhor como funciona antes</span></label>
+        <label class="opt"><input type="radio" name="q8" value="medo"><span class="opt-dot"></span><span class="opt-label">Tenho medo de começar e não conseguir manter</span></label>
+        <label class="opt"><input type="radio" name="q8" value="investimento"><span class="opt-dot"></span><span class="opt-label">Hoje o investimento seria meu maior desafio</span></label>
+      </div>
+    </div>
+
+    <!-- P9 -->
+    <div class="question" data-q="9">
+      <div class="q-num">Pergunta 9 de 10</div>
+      <div class="q-text">Mudar o corpo de verdade exige tempo e consistência. Como você se vê nessa jornada?</div>
+      <div class="options">
+        <label class="opt"><input type="radio" name="q9" value="hot"><span class="opt-dot"></span><span class="opt-label">Estou totalmente pronto(a) — quero começar e ir até o fim</span></label>
+        <label class="opt"><input type="radio" name="q9" value="warm"><span class="opt-dot"></span><span class="opt-label">Quero muito, mas já falhei antes e tenho medo de desistir de novo</span></label>
+        <label class="opt"><input type="radio" name="q9" value="warm"><span class="opt-dot"></span><span class="opt-label">Preciso entender o que seria exigido de mim antes de decidir</span></label>
+        <label class="opt"><input type="radio" name="q9" value="cold"><span class="opt-dot"></span><span class="opt-label">Ainda estou avaliando se é o momento certo</span></label>
+      </div>
+    </div>
+
+    <!-- Âncora de valor -->
+    <div class="anchor-block" id="anchorBlock">
+      <p class="anchor-text">
+        Você sabia que a maioria dos nossos pacientes já gastou muito mais tentando emagrecer — em dietas, academias e produtos — sem resultado duradouro?<br><br>
+        O <strong>Protocolo NEXUS</strong> é diferente porque ataca a causa real, não o sintoma. Acompanhamento personalizado, diagnóstico metabólico e ajuste contínuo.<br><br>
+        O investimento mensal é equivalente a uma academia premium — mas com o resultado que você nunca conseguiu sozinho.
+      </p>
+    </div>
+
+    <!-- P10 -->
+    <div class="question" data-q="10">
+      <div class="q-num">Pergunta 10 de 10</div>
+      <div class="q-text">Pensando nisso, qual dessas situações mais representa você?</div>
+      <div class="options">
+        <label class="opt"><input type="radio" name="q10" value="a"><span class="opt-dot"></span><span class="opt-label">Faz sentido para mim — prefiro pagar à vista e garantir desconto</span></label>
+        <label class="opt"><input type="radio" name="q10" value="b"><span class="opt-dot"></span><span class="opt-label">Faz sentido — prefiro parcelar para encaixar melhor no mês</span></label>
+        <label class="opt"><input type="radio" name="q10" value="c"><span class="opt-dot"></span><span class="opt-label">Quero muito, mas preciso conversar com meu cônjuge ou familiar antes</span></label>
+        <label class="opt"><input type="radio" name="q10" value="d"><span class="opt-dot"></span><span class="opt-label">Quero entender melhor — prefiro falar com a equipe antes de escolher</span></label>
+      </div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn-nav btn-back" id="btnBack" onclick="prevQ()" style="visibility:hidden">← Voltar</button>
+      <button class="btn-nav btn-next" id="btnNext" onclick="nextQ()" disabled>Continuar →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     TELA 2.5 — CAPTURA DE LEAD
+══════════════════════════════ -->
+<div class="screen" id="screen-lead">
+  <div class="quiz-header">
+    <div class="quiz-logo-sm">NEXUS<span>.</span></div>
+    <div class="quiz-progress-wrap">
+      <div class="quiz-bar"><div class="quiz-fill" style="width:100%"></div></div>
+      <div class="quiz-label">Quase lá — última etapa</div>
+    </div>
+  </div>
+  <div class="quiz-body">
+    <div class="q-num">Liberar resultado</div>
+    <div class="q-text" style="font-family:'Playfair Display',serif;font-size:1.25rem;color:var(--navy);margin-bottom:.4rem;">Para liberar sua análise personalizada, preencha seus dados abaixo</div>
+    <p class="q-hint">Suas informações são confidenciais e usadas apenas pela equipe NEXUS.</p>
+
+    <div style="display:flex;flex-direction:column;gap:.85rem;margin-bottom:1.5rem;">
+      <div>
+        <label style="font-size:.8rem;font-weight:500;color:var(--navy);display:block;margin-bottom:.35rem;">Seu nome <span style="color:var(--gold)">*</span></label>
+        <input type="text" id="leadNome" placeholder="Como prefere ser chamado(a)?" style="width:100%;padding:.7rem .9rem;border:1px solid var(--border);border-radius:var(--r);font-family:'Jost',sans-serif;font-size:.9rem;color:var(--text);background:#fff;-webkit-appearance:none;">
+      </div>
+      <div>
+        <label style="font-size:.8rem;font-weight:500;color:var(--navy);display:block;margin-bottom:.35rem;">WhatsApp <span style="color:var(--gold)">*</span></label>
+        <input type="tel" id="leadWpp" placeholder="(83) 99999-9999" style="width:100%;padding:.7rem .9rem;border:1px solid var(--border);border-radius:var(--r);font-family:'Jost',sans-serif;font-size:.9rem;color:var(--text);background:#fff;-webkit-appearance:none;">
+      </div>
+      <div>
+        <label style="font-size:.8rem;font-weight:500;color:var(--navy);display:block;margin-bottom:.35rem;">Peso atual</label>
+        <input type="number" id="leadPeso" placeholder="Ex: 82 kg" style="width:100%;padding:.7rem .9rem;border:1px solid var(--border);border-radius:var(--r);font-family:'Jost',sans-serif;font-size:.9rem;color:var(--text);background:#fff;-webkit-appearance:none;">
+      </div>
+      <div>
+        <label style="font-size:.8rem;font-weight:500;color:var(--navy);display:block;margin-bottom:.35rem;">Cidade</label>
+        <input type="text" id="leadCidade" placeholder="Ex: Livramento / PB" style="width:100%;padding:.7rem .9rem;border:1px solid var(--border);border-radius:var(--r);font-family:'Jost',sans-serif;font-size:.9rem;color:var(--text);background:#fff;-webkit-appearance:none;">
+      </div>
+      <div>
+        <label style="font-size:.8rem;font-weight:500;color:var(--navy);display:block;margin-bottom:.35rem;">Como nos conheceu?</label>
+        <select id="leadOrigem" style="width:100%;padding:.7rem .9rem;border:1px solid var(--border);border-radius:var(--r);font-family:'Jost',sans-serif;font-size:.9rem;color:var(--text);background:#fff;-webkit-appearance:none;">
+          <option value="">Selecione...</option>
+          <option value="Instagram">Instagram</option>
+          <option value="Indicação de amigo ou familiar">Indicação de amigo ou familiar</option>
+          <option value="Google">Google</option>
+          <option value="Indicação de profissional de saúde">Indicação de profissional de saúde</option>
+          <option value="Outro">Outro</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="leadErro" style="display:none;font-size:.8rem;color:#C0392B;margin-bottom:.75rem;">Por favor, preencha nome e WhatsApp para continuar.</div>
+
+    <div class="quiz-nav" style="padding-top:1rem;">
+      <button class="btn-nav btn-back" onclick="backToQuiz()">← Voltar</button>
+      <button class="btn-nav btn-next" onclick="submitLead()">Ver meu resultado →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     TELA 3 — RESULTADO
+══════════════════════════════ -->
+<div class="screen" id="screen-result">
+  <div class="result-hero">
+    <div class="result-logo">NEXUS<span>.</span></div>
+    <div class="result-badge">Análise metabólica personalizada</div>
+    <div class="result-score-ring">
+      <div class="result-score-num" id="resultScoreNum">0</div>
+      <div class="result-score-lbl">score</div>
+    </div>
+    <div class="result-profile-name" id="resultName"></div>
+    <p class="result-desc" id="resultDesc"></p>
+    <div class="result-signals" id="resultSignals">
+      <div class="signals-title">Sinais identificados no seu perfil</div>
+      <div id="signalsList"></div>
+    </div>
+  </div>
+  <div class="result-cta-group">
+    <a class="btn-portfolio" id="resultAgendarBtn" href="#" target="_blank">Agendar minha avaliação →</a>
+    <button class="btn-wpp" onclick="showPortfolio()">Ver serviços e valores da Clínica NEXUS</button>
+    <p style="font-size:.72rem;color:rgba(255,255,255,.35);line-height:1.6;text-align:center;margin-top:.5rem;">Esta análise tem finalidade educativa e de triagem inicial. Não substitui consulta clínica individualizada nem avaliação médica.</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     TELA 4 — PORTFÓLIO
+══════════════════════════════ -->
+<div class="screen" id="screen-portfolio">
+
+  <div class="port-header">
+    <button class="port-back" onclick="backToResult()">← Voltar</button>
+    <div class="port-logo">NEXUS<span>.</span></div>
+    <div class="port-tagline">Centro de Performance Metabólica & Longevidade</div>
+  </div>
+
+  <div class="port-hero">
+    <h2 class="port-hero-title">Nossos <em>serviços</em><br>e investimentos</h2>
+    <p class="port-hero-sub">Cada protocolo é conduzido e ajustado individualmente pelo Enf. Sosthenes ao longo de todo o tratamento.</p>
+    <div class="port-hero-divider"></div>
+  </div>
+
+  <!-- Nav categorias -->
+  <div class="port-nav">
+    <div class="port-nav-inner">
+      <button class="cat-btn active" onclick="showCat('emagrecimento',this)">Emagrecimento</button>
+      <button class="cat-btn" onclick="showCat('hormonal',this)">Hormonal</button>
+      <button class="cat-btn" onclick="showCat('soroterapia',this)">Soroterapia</button>
+      <button class="cat-btn" onclick="showCat('tirzepatida',this)">Tirzepatida</button>
+      <button class="cat-btn" onclick="showCat('avaliacao',this)">Avaliação</button>
+    </div>
+  </div>
+
+  <!-- ── EMAGRECIMENTO ── -->
+  <div class="port-section visible" id="cat-emagrecimento">
+    <div class="port-s-label">Protocolo principal</div>
+    <h3 class="port-s-title">Programas de Emagrecimento</h3>
+    <p class="port-s-desc">Três níveis de acompanhamento, todos com Tirzepatida (Mounjaro) e monitoramento clínico contínuo.</p>
+
+    <div class="service-card">
+      <div class="sc-tag">Essencial</div>
+      <div class="sc-name">Protocolo Nexus Essencial</div>
+      <div class="sc-desc">Indicado para quem está começando o processo de emagrecimento com acompanhamento clínico estruturado.</div>
+      <div class="sc-includes">
+        <div class="sc-inc-title">Inclui</div>
+        <div class="sc-inc-item">12 aplicações semanais de Tirzepatida (Mounjaro)</div>
+        <div class="sc-inc-item">Monitoramento clínico contínuo</div>
+        <div class="sc-inc-item">Ajuste de dose conforme evolução</div>
+        <div class="sc-inc-item">4 Suportes Estratégicos Metabólicos</div>
+      </div>
+      <div class="sc-price-row">
+        <div>
+          <div class="sc-price">R$ 3.300</div>
+          <div class="sc-price-note">Investimento total · 3 meses</div>
+          <div class="sc-price-pix">Pix/espécie: R$ 2.970</div>
+        </div>
+        <div class="sc-price-note">ou 6x de R$ 550,00</div>
+      </div>
+      <a class="sc-btn" href="https://wa.me/5583999086787?text=Olá!%20Fiz%20o%20Perfil%20Metabólico%20NEXUS%20e%20tenho%20interesse%20no%20Protocolo%20Essencial.%20Gostaria%20de%20saber%20mais." target="_blank">Quero saber mais →</a>
+    </div>
+
+    <div class="service-card featured">
+      <span class="sc-popular">Mais escolhido</span>
+      <div class="sc-tag">Método</div>
+      <div class="sc-name">Protocolo Nexus Método</div>
+      <div class="sc-desc">Nossa versão mais equilibrada — combina emagrecimento eficiente com suporte metabólico completo.</div>
+      <div class="sc-includes">
+        <div class="sc-inc-title">Inclui</div>
+        <div class="sc-inc-item">12 aplicações semanais de Tirzepatida (Mounjaro)</div>
+        <div class="sc-inc-item">Monitoramento clínico contínuo</div>
+        <div class="sc-inc-item">6 Suportes Estratégicos Metabólicos</div>
+        <div class="sc-inc-item">Suporte Digestivo + Performance Energética</div>
+      </div>
+      <div class="sc-price-row">
+        <div>
+          <div class="sc-price">R$ 3.800</div>
+          <div class="sc-price-note">Investimento total · 3 meses</div>
+          <div class="sc-price-pix">Pix/espécie: R$ 3.420</div>
+        </div>
+        <div class="sc-price-note">ou 6x de R$ 633,33</div>
+      </div>
+      <a class="sc-btn" href="https://wa.me/5583999086787?text=Olá!%20Fiz%20o%20Score%20Metabólico%20NEXUS%20e%20tenho%20interesse%20no%20Protocolo%20Método.%20Gostaria%20de%20agendar%20uma%20consulta." target="_blank">Quero agendar consulta →</a>
+    </div>
+
+    <div class="service-card">
+      <div class="sc-tag">Avançado</div>
+      <div class="sc-name">Protocolo Nexus Avançado</div>
+      <div class="sc-desc">Para quem deseja potencializar resultados metabólicos com um protocolo ainda mais completo.</div>
+      <div class="sc-includes">
+        <div class="sc-inc-title">Inclui</div>
+        <div class="sc-inc-item">12 aplicações semanais de Tirzepatida (Mounjaro)</div>
+        <div class="sc-inc-item">8 Suportes Estratégicos Metabólicos</div>
+        <div class="sc-inc-item">4 Start Metabólico · 2 Suporte Digestivo · 2 Performance Energética</div>
+        <div class="sc-inc-item">Monitoramento clínico completo</div>
+      </div>
+      <div class="sc-price-row">
+        <div>
+          <div class="sc-price">R$ 5.200</div>
+          <div class="sc-price-note">Investimento total · 3 meses</div>
+          <div class="sc-price-pix">Pix/espécie: R$ 4.680</div>
+        </div>
+        <div class="sc-price-note">ou 6x de R$ 866,67</div>
+      </div>
+      <a class="sc-btn" href="https://wa.me/5583999086787?text=Olá!%20Fiz%20o%20Score%20Metabólico%20NEXUS%20e%20tenho%20interesse%20no%20Protocolo%20Avançado." target="_blank">Quero saber mais →</a>
+    </div>
+  </div>
+
+  <!-- ── HORMONAL ── -->
+  <div class="port-section" id="cat-hormonal">
+    <div class="port-s-label">Reequilíbrio</div>
+    <h3 class="port-s-title">Avaliação e Reposição Hormonal</h3>
+    <p class="port-s-desc">Avaliação individualizada para TRH com análise clínica e orientação estratégica. Indicação mediante avaliação e análise laboratorial.</p>
+
+    <div class="service-card">
+      <div class="sc-tag">Avaliação feminina</div>
+      <div class="sc-name">Avaliação Hormonal Feminina</div>
+      <div class="sc-desc">Consulta de avaliação completa para planejamento de terapia de reposição hormonal feminina.</div>
+      <div class="sc-price-row">
+        <div>
+          <div class="sc-price">R$ 250</div>
+          <div class="sc-price-note">Avaliação clínica + planejamento terapêutico</div>
+        </div>
+      </div>
+      <a class="sc-btn" href="https://wa.me/5583999086787?text=Olá!%20Tenho%20interesse%20na%20Avaliação%20Hormonal%20Feminina%20NEXUS." target="_blank">Agendar avaliação →</a>
+    </div>
+
+    <div class="service-card">
+      <div class="sc-tag">Avaliação masculina</div>
+      <div class="sc-name">Avaliação Hormonal Masculina</div>
+      <div class="sc-desc">Consulta de avaliação completa para planejamento de reposição de testosterona e otimização hormonal masculina.</div>
+      <div class="sc-price-row">
+        <div>
+          <div class="sc-price">R$ 250</div>
+          <div class="sc-price-note">Avaliação clínica + planejamento terapêutico</div>
+        </div>
+      </div>
+      <a class="sc-btn" href="https://wa.me/5583999086787?text=Olá!%20Tenho%20interesse%20na%20Avaliação%20Hormonal%20Masculina%20NEXUS." target="_blank">Agendar avaliação →</a>
+    </div>
+
+    <div class="service-card">
+      <div class="sc-tag">Aplicação avulsa</div>
+      <div class="sc-name">Aplicação Hormonal Avulsa</div>
+      <div class="sc-desc">Já tem seu protocolo hormonal estabelecido? Continue com o acompanhamento que merece, independente de onde iniciou.</div>
+      <div class="sc-price-row">
+        <div>
+          <div class="sc-price">A partir de R$ 120</div>
+          <div class="sc-price-note">Por aplicação · Pode variar conforme o éster prescrito</div>
+        </div>
+      </div>
+      <a class="sc-btn" href="https://wa.me/5583999086787?text=Olá!%20Tenho%20interesse%20na%20aplicação%20hormonal%20avulsa%20NEXUS.%20Já%20tenho%20meu%20protocolo." target="_blank">Falar com a equipe →</a>
+    </div>
+  </div>
+
+  <!-- ── SOROTERAPIA ── -->
+  <div class="port-section" id="cat-soroterapia">
+    <div class="port-s-label">IV · IM</div>
+    <h3 class="port-s-title">Suportes Estratégicos & Soroterapia</h3>
+    <p class="port-s-desc">Protocolos de soroterapia personalizada para otimizar a adaptação metabólica e potencializar o desempenho clínico.</p>
+
+    <div class="service-card">
+      <div class="sc-tag">Soroterapia IV</div>
+      <div class="sc-name">Start Metabólico</div>
+      <div class="sc-desc">Suporte para início de processo metabólico, otimização de adaptação e desempenho clínico.</div>
+      <div class="sc-price-row">
+        <div>
+          <div class="sc-price">R$ 190</div>
+          <div class="sc-price-note">Paciente NEXUS · Externo: R$ 250</div>
+        </div>
+      </div>
+      <a class="sc-btn" href="https://wa.me/5583999086787?text=Olá!%20Tenho%20interesse%20no%20Suporte%20Start%20Metabólico." target="_blank">Agendar →</a>
+    </div>
+
+    <div class="service-card">
+      <div class="sc-tag">Soroterapia IV</div>
+      <div class="sc-name">Suporte Digestivo</div>
+      <div class="sc-desc">Protocolo para equilíbrio intestinal e suporte à microbiota durante o tratamento.</div>
+      <div class="sc-price-row">
+        <div>
+          <div class="sc-price">R$ 140</div>
+          <div class="sc-price-note">Paciente NEXUS · Externo: R$ 200</div>
+        </div>
+      </div>
+      <a class="sc-btn" href="https://wa.me/5583999086787?text=Olá!%20Tenho%20interesse%20no%20Suporte%20Digestivo." target="_blank">Agendar →</a>
+    </div>
+
+    <div class="service-card">
+      <div class="sc-tag">Soroterapia IV</div>
+      <div class="sc-name">Performance Energética</div>
+      <div class="sc-desc">Suporte para fadiga, disposição e melhora do desempenho físico e mental.</div>
+      <div class="sc-price-row">
+        <div>
+          <div class="sc-price">R$ 170</div>
+          <div class="sc-price-note">Paciente NEXUS · Externo: R$ 230</div>
+        </div>
+      </div>
+      <a class="sc-btn" href="https://wa.me/5583999086787?text=Olá!%20Tenho%20interesse%20no%20Suporte%20Performance%20Energética." target="_blank">Agendar →</a>
+    </div>
+
+    <div class="service-card featured">
+      <div class="sc-tag">Kit completo</div>
+      <div class="sc-name">Kit NEXUS Evolution</div>
+      <div class="sc-desc">4 aplicações à sua escolha — o pacote mais completo para potencializar resultados sem alterar o protocolo principal.</div>
+      <div class="sc-includes">
+        <div class="sc-inc-title">Inclui</div>
+        <div class="sc-inc-item">4 aplicações à sua escolha</div>
+        <div class="sc-inc-item">Acesso a protocolos exclusivos</div>
+        <div class="sc-inc-item">Valor individual máximo: até R$ 830</div>
+      </div>
+      <div class="sc-price-row">
+        <div>
+          <div class="sc-price">R$ 640</div>
+          <div class="sc-price-note">Kit completo com 4 aplicações</div>
+        </div>
+      </div>
+      <a class="sc-btn" href="https://wa.me/5583999086787?text=Olá!%20Tenho%20interesse%20no%20Kit%20NEXUS%20Evolution." target="_blank">Quero o kit →</a>
+    </div>
+
+    <div class="service-card">
+      <div class="sc-tag">Saúde capilar · IM</div>
+      <div class="sc-name">Reposição Capilar</div>
+      <div class="sc-desc">Protocolo intramuscular para queda de cabelo, fortalecimento e saúde capilar.</div>
+      <div class="sc-price-row">
+        <div>
+          <div class="sc-price">R$ 90</div>
+          <div class="sc-price-note">Aplicação avulsa</div>
+        </div>
+        <div class="sc-price-note">Pacote 3x: R$ 240</div>
+      </div>
+      <a class="sc-btn" href="https://wa.me/5583999086787?text=Olá!%20Tenho%20interesse%20no%20protocolo%20de%20saúde%20capilar." target="_blank">Agendar →</a>
+    </div>
+  </div>
+
+  <!-- ── TIRZEPATIDA ── -->
+  <div class="port-section" id="cat-tirzepatida">
+    <div class="port-s-label">GLP-1 · Avulso</div>
+    <h3 class="port-s-title">Tirzepatida (Mounjaro)<br>Aplicação Avulsa</h3>
+    <p class="port-s-desc">Para pacientes já em acompanhamento ou com protocolo previamente estabelecido. Transporte em isopor térmico com gelo refrigerado e kit de aplicação incluso.</p>
+
+    <table class="dose-table">
+      <thead>
+        <tr>
+          <th>Dose</th>
+          <th>Fase</th>
+          <th>Valor</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>2,5 mg</td><td>Início</td><td class="dose-price">R$ 200</td></tr>
+        <tr><td>5 mg</td><td>Titulação</td><td class="dose-price">R$ 350</td></tr>
+        <tr><td>7,5 mg</td><td>Titulação</td><td class="dose-price">R$ 450</td></tr>
+        <tr><td>10 mg</td><td>Manutenção</td><td class="dose-price">R$ 550</td></tr>
+        <tr><td>12,5 mg</td><td>Alta Performance <span class="dose-tag">avançado</span></td><td class="dose-price">R$ 650</td></tr>
+        <tr><td>15 mg</td><td>Alta Performance <span class="dose-tag">avançado</span></td><td class="dose-price">R$ 750</td></tr>
+      </tbody>
+    </table>
+
+    <div class="service-card" style="background:var(--gold3);border-color:#D4A830;">
+      <div class="sc-desc" style="color:#7A5210;font-size:.78rem;line-height:1.7;">
+        A Tirzepatida (Mounjaro®) é medicamento de venda sob prescrição médica. Os valores referem-se ao serviço de aplicação e acompanhamento clínico. Dispensação exclusivamente mediante receituário médico vigente.
+      </div>
+    </div>
+
+    <a class="sc-btn" style="background:var(--teal);color:#fff;display:block;text-align:center;text-decoration:none;padding:.65rem 1rem;border-radius:99px;font-family:'Jost',sans-serif;font-size:.82rem;font-weight:600;letter-spacing:.07em;" href="https://wa.me/5583999086787?text=Olá!%20Tenho%20interesse%20na%20aplicação%20avulsa%20de%20Tirzepatida." target="_blank">Agendar aplicação →</a>
+  </div>
+
+  <!-- ── AVALIAÇÃO ── -->
+  <div class="port-section" id="cat-avaliacao">
+    <div class="port-s-label">Primeira consulta</div>
+    <h3 class="port-s-title">Avaliação Metabólica Inicial</h3>
+    <p class="port-s-desc">O ponto de partida para qualquer protocolo NEXUS. Uma consulta completa para definir o caminho certo para o seu objetivo.</p>
+
+    <div class="service-card featured">
+      <div class="sc-tag">Consulta inicial</div>
+      <div class="sc-name">Avaliação Metabólica NEXUS</div>
+      <div class="sc-desc">Diagnóstico clínico completo, avaliação de composição corporal, análise laboratorial e definição do protocolo mais adequado ao seu perfil.</div>
+      <div class="sc-includes">
+        <div class="sc-inc-title">Inclui</div>
+        <div class="sc-inc-item">Anamnese clínica completa</div>
+        <div class="sc-inc-item">Avaliação de composição corporal</div>
+        <div class="sc-inc-item">Definição do protocolo mais adequado</div>
+        <div class="sc-inc-item">Solicitação de exames laboratoriais</div>
+      </div>
+      <div class="sc-price-row">
+        <div>
+          <div class="sc-price">R$ 150</div>
+          <div class="sc-price-note">Sessão única</div>
+        </div>
+      </div>
+      <p style="font-size:.75rem;color:rgba(255,255,255,.45);margin:.75rem 0;">Caso inicie um programa NEXUS em até 7 dias, o valor pode ser revertido como crédito parcial.</p>
+      <a class="sc-btn" href="https://wa.me/5583999086787?text=Olá!%20Fiz%20o%20Score%20Metabólico%20NEXUS%20e%20gostaria%20de%20agendar%20minha%20Avaliação%20Metabólica." target="_blank">Agendar minha avaliação →</a>
+    </div>
+  </div>
+
+  <div class="port-footer">
+    <div class="port-footer-logo">NEXUS<span>.</span></div>
+    <div class="port-footer-sub">Centro de Performance Metabólica & Longevidade</div>
+    <a class="port-footer-wpp" href="https://wa.me/5583999086787?text=Olá!%20Fiz%20o%20Score%20Metabólico%20NEXUS%20e%20gostaria%20de%20mais%20informações." target="_blank">Falar com a equipe →</a>
+  </div>
+
+</div><!-- /screen-portfolio -->
+
+<script>
+const WPP = '5583999086787';
+
+// ── Estado do quiz ──
+let currentQ = 1;
+const totalQ = 10;
+let scores = {};
+let commitment = '';
+let paymentProfile = '';
+let barrier = '';
+let leadData = {};
+
+// ── Inicia o quiz ──
+function startQuiz() {
+  switchScreen('screen-intro', 'screen-quiz');
+}
+
+// ── Troca de tela ──
+function switchScreen(from, to) {
+  document.getElementById(from).classList.remove('active');
+  document.getElementById(to).classList.add('active');
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+// ── Seleciona opção ──
+document.addEventListener('change', function(e) {
+  if (e.target.type !== 'radio') return;
+  const q = e.target.closest('.question');
+  q.querySelectorAll('.opt').forEach(o => o.classList.remove('sel'));
+  e.target.closest('.opt').classList.add('sel');
+
+  const name = e.target.name;
+  const val = e.target.value;
+
+  if (name === 'q9') commitment = val;
+  if (name === 'q10') paymentProfile = val;
+  if (name === 'q8') barrier = val;
+
+  const num = parseInt(val);
+  if (!isNaN(num)) {
+    scores[name] = num;
+  }
+
+  document.getElementById('btnNext').disabled = false;
+
+  if (currentQ === 9) {
+    document.getElementById('anchorBlock').classList.add('show');
+  }
+});
+
+// ── Avança pergunta ──
+function nextQ() {
+  if (currentQ >= totalQ) {
+    switchScreen('screen-quiz', 'screen-lead');
+    return;
+  }
+
+  document.querySelector(`[data-q="${currentQ}"]`).classList.remove('active');
+  currentQ++;
+  document.querySelector(`[data-q="${currentQ}"]`).classList.add('active');
+
+  updateProgress();
+
+  const sel = document.querySelector(`[data-q="${currentQ}"] input:checked`);
+  document.getElementById('btnNext').disabled = !sel;
+  document.getElementById('btnNext').textContent = currentQ === totalQ ? 'Ver meu resultado →' : 'Continuar →';
+  document.getElementById('btnBack').style.visibility = currentQ > 1 ? 'visible' : 'hidden';
+
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function prevQ() {
+  if (currentQ <= 1) return;
+  document.querySelector(`[data-q="${currentQ}"]`).classList.remove('active');
+  currentQ--;
+  document.querySelector(`[data-q="${currentQ}"]`).classList.add('active');
+  updateProgress();
+
+  const sel = document.querySelector(`[data-q="${currentQ}"] input:checked`);
+  document.getElementById('btnNext').disabled = !sel;
+  document.getElementById('btnNext').textContent = currentQ === totalQ ? 'Ver meu resultado →' : 'Continuar →';
+  document.getElementById('btnBack').style.visibility = currentQ > 1 ? 'visible' : 'hidden';
+
+  if (currentQ === 9) {
+    document.getElementById('anchorBlock').classList.add('show');
+  } else if (currentQ < 9) {
+    document.getElementById('anchorBlock').classList.remove('show');
+  }
+}
+
+function backToQuiz() {
+  switchScreen('screen-lead', 'screen-quiz');
+}
+
+function updateProgress() {
+  const pct = Math.round((currentQ / totalQ) * 100);
+  document.getElementById('quizFill').style.width = pct + '%';
+  document.getElementById('quizLabel').textContent = `Pergunta ${currentQ} de ${totalQ}`;
+}
+
+// ── Captura lead ──
+function submitLead() {
+  const nome = document.getElementById('leadNome').value.trim();
+  const wpp  = document.getElementById('leadWpp').value.trim();
+
+  if (!nome || !wpp) {
+    document.getElementById('leadErro').style.display = 'block';
+    return;
+  }
+  document.getElementById('leadErro').style.display = 'none';
+
+  leadData = {
+    nome,
+    whatsapp: wpp,
+    peso:    document.getElementById('leadPeso').value.trim(),
+    cidade:  document.getElementById('leadCidade').value.trim(),
+    origem:  document.getElementById('leadOrigem').value
+  };
+
+  showResult();
+}
+
+// ── Calcula e exibe resultado ──
+function showResult() {
+  const total = Object.values(scores).reduce((a, b) => a + b, 0);
+
+  let profile, name, desc, signals, wppMsg, defaultCat;
+
+  if (total <= 7) {
+    profile = 'leve';
+    name = 'Metabolismo <em>Preservado</em>';
+    desc = 'Seu organismo ainda responde bem a intervenções clínicas. Com o protocolo certo, você tem grande potencial de resultado em pouco tempo — o foco é ajuste metabólico e composição corporal.';
+    signals = [
+      'Sensibilidade metabólica preservada — boa janela para intervenção',
+      'Potencial de resposta rápida ao protocolo individualizado',
+      'Avaliação indicada para definir estratégia e metas'
+    ];
+    wppMsg = `Olá! Fiz o Perfil Metabólico NEXUS e meu resultado foi Metabolismo Preservado. Me chamo ${leadData.nome || ''} e gostaria de agendar minha avaliação.`;
+    defaultCat = 'avaliacao';
+  } else if (total <= 14) {
+    profile = 'moderado';
+    name = 'Resistência <em>Metabólica</em>';
+    desc = 'Seu organismo já apresenta sinais de resistência — o que pode explicar por que dietas e exercícios sozinhos não estão gerando resultado duradouro. Uma avaliação clínica vai identificar a causa e o melhor caminho.';
+    signals = [
+      'Sinais sugestivos de resistência metabólica ou inflamatória',
+      'Dificuldade de resposta a métodos convencionais isolados',
+      'Avaliação indicada para investigação clínica e laboratorial'
+    ];
+    wppMsg = `Olá! Fiz o Perfil Metabólico NEXUS e meu resultado foi Resistência Metabólica. Me chamo ${leadData.nome || ''} e gostaria de entender melhor o que pode estar acontecendo.`;
+    defaultCat = 'emagrecimento';
+  } else {
+    profile = 'complexo';
+    name = 'Perfil de <em>Maior Complexidade</em>';
+    desc = 'Seu perfil sugere múltiplos sinais de desregulação metabólica que merecem avaliação clínica individualizada. Isso pode ajudar a explicar a dificuldade de resposta a métodos convencionais.';
+    signals = [
+      'Múltiplos sinais de desregulação metabólica identificados',
+      'Padrão sugestivo de resistência instalada — requer investigação',
+      'Avaliação clínica e laboratorial indicada com prioridade'
+    ];
+    wppMsg = `Olá! Fiz o Perfil Metabólico NEXUS e meu resultado foi Perfil de Maior Complexidade. Me chamo ${leadData.nome || ''} e gostaria de agendar uma avaliação o quanto antes.`;
+    defaultCat = 'emagrecimento';
+  }
+
+  // Adapta mensagem pelo perfil financeiro
+  if (paymentProfile === 'a') wppMsg += ' Tenho interesse em pagar à vista.';
+  if (paymentProfile === 'b') wppMsg += ' Prefiro parcelar — gostaria de saber as opções.';
+  if (paymentProfile === 'c') wppMsg += ' Preciso conversar com meu cônjuge antes de decidir.';
+  if (paymentProfile === 'd') wppMsg += ' Prefiro primeiro entender qual plano faz mais sentido para mim.';
+  if (barrier === 'investimento') wppMsg += ' Gostaria de entender as opções de investimento disponíveis.';
+
+  if (leadData.peso)   wppMsg += ` Meu peso atual é ${leadData.peso} kg.`;
+  if (leadData.cidade) wppMsg += ` Sou de ${leadData.cidade}.`;
+
+  document.getElementById('resultScoreNum').textContent = total;
+  document.getElementById('resultName').innerHTML = name;
+  document.getElementById('resultDesc').textContent = desc;
+
+  const list = document.getElementById('signalsList');
+  list.innerHTML = signals.map(s => `<div class="signal-item"><div class="signal-dot"></div><span>${s}</span></div>`).join('');
+
+  const agendarLink = `https://wa.me/${WPP}?text=${encodeURIComponent(wppMsg)}`;
+  document.getElementById('resultAgendarBtn').href = agendarLink;
+
+  // Guarda categoria padrão do portfólio
+  window._defaultPortfolioCat = defaultCat;
+
+  switchScreen('screen-lead', 'screen-result');
+}
+
+// ── Portfólio ──
+function showPortfolio() {
+  document.getElementById('screen-result').classList.remove('active');
+  document.getElementById('screen-portfolio').classList.add('active');
+
+  // Abre na categoria certa para o perfil
+  const cat = window._defaultPortfolioCat || 'avaliacao';
+  const btn = document.querySelector(`.cat-btn[onclick*="${cat}"]`);
+  if (btn) showCat(cat, btn);
+
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function backToResult() {
+  document.getElementById('screen-portfolio').classList.remove('active');
+  document.getElementById('screen-result').classList.add('active');
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function showCat(cat, btn) {
+  document.querySelectorAll('.port-section').forEach(s => s.classList.remove('visible'));
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('cat-' + cat).classList.add('visible');
+  btn.classList.add('active');
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+</script>
+</body>
+</html>
